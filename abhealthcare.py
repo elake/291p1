@@ -4,14 +4,13 @@ in the labs), and currently has pass functions for Oracle implementation.
 The first five functions below need to be implemented.
 """
 
+""" createPrescription
+    - Takes: employee_no of doctor (enum), name of test (tname), health_care_no of patient (pnum)
+    - Rejects: Prescriptions which conflict with not_allowed
+    - Generates: test_id for the test_record (Use NULL value properly)
+"""
+def createPrescription(enum, tname, pnum):
 
-def createPrescription(pnum, tname, enum):
-    """
-    Yet to be implemented function to create a perscription using patient number
-    pnum, test name tname, and employee number enum. Currently unimplemented
-    because the lab tutorials have yet to cover Python connection to Oracle.
-    We should probably learn that ourselves.
-    """
     return "createPrescription not yet implemented"
 
 def checkTest(pnum, tname):
