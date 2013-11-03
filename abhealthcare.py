@@ -4,14 +4,59 @@ in the labs), and currently has pass functions for Oracle implementation.
 The first five functions below need to be implemented.
 """
 
+import sys
+import cx_Oracle
+import time
+
+# To generate a test_id
+import uuid
+
 """ createPrescription
     - Takes: employee_no of doctor (enum), name of test (tname), health_care_no of patient (pnum)
-    - Rejects: Prescriptions which conflict with not_allowed
-    - Generates: test_id for the test_record (Use NULL value properly)
+    - Check: Doctor, test_name, patient exist
+    - Rejects: Prescriptions which conflict with not_allowed.
+    - Generates: test_id for the new test_record
+    - New test_record: test_date, test_result, lab_name all set to null
 """
 def createPrescription(enum, tname, pnum):
+    # >>>> THIS HAS NOT BEEN TESTED <<<<<<
+    con = 'connectioninfo' # Is THIS SUPPOSED TO BE HERE? D:
+    curs = con.cursor()
+    
+    # Check given information matches a doctor and a patient in database.
+    queryStr=('SELECT employee_no FROM doctor WHERE employee_no=%s', (enum))
+    is_doctor=curs.execute(queryStr)
+    if is_doctor is None:
+        return "Prescription creation failed. Doctor does not exist."
 
-    return "createPrescription not yet implemented"
+    queryStr=('SELECT health_care_no FROM patient WHERE health_care_no=%s', (pnum))
+    is_patient=cur.execute(queryStr)
+    if is_patient is None:
+        return "Prescription creation failed. Patient does not exist. Please add patient using Update/Create Patient Info."
+
+    # Get type_id based off tname. Also check type_id exists.
+    queryStr=('SELECT type_id FROM test_record WHERE test_name=%s', (tname))
+    type_id=curs.execute(queryStr)
+    if type_id is None:
+        return "Prescription creation failed. Test type does not exist."
+
+    # Check prescription does not conflict with not_allowed.
+    queryStr=('SELECT health_care_no FROM not_allowed WHERE type_id=%s', (type_id))
+    not_allowed=curs.execute(queryStr)
+    for patient_num in not_allowed:
+        if patient_num = pnum:
+            return "Prescription creation failed. Patient is not allowed to take this test."
+        
+    # Create a new test record (date, result, lab are all null)
+    test_id = uuid.uuid1().int>>98
+    pdate = time.strftime('%d/%m/%y')
+    
+    insertStr=("INSERT into MOVIE values (%s, %s, %s, %s, %s, %s, %s, %s)", (test_id, type_id, pnum, enum, none, none, pdate, none))
+    cur.execute(insertStr)
+    con.commit()
+
+    # Inform user prescription successfully created
+    return "Prescription created"
 
 def checkTest(pnum, tname):
     """
