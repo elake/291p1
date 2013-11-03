@@ -11,15 +11,15 @@ import time
 # To generate a test_id
 import uuid
 
-""" createPrescription
-    - Takes: employee_no of doctor (enum), name of test (tname), health_care_no of patient (pnum)
-    - Check: Doctor, test_name, patient exist
-    - Rejects: Prescriptions which conflict with not_allowed.
-    - Generates: test_id for the new test_record
-    - New test_record: test_date, test_result, lab_name all set to null
-"""
 def createPrescription(enum, tname, pnum):
     # >>>> THIS HAS NOT BEEN TESTED <<<<<<
+""" 
+    - Create a new test_record with enum, tname, pnum, test_id (generated upon creation), and
+    prescription_date (uses current date). Lab_name, test_date, result are all null.
+    - Rejects: Prescriptions which conflict with not_allowed. Also fails if enum, tname or pnum
+    do not exist.
+    - Returns: Prescription creation success or failure message.
+"""
     con = 'connectioninfo' # Is THIS SUPPOSED TO BE HERE? D:
     curs = con.cursor()
     
@@ -60,18 +60,27 @@ def createPrescription(enum, tname, pnum):
 
 def checkTest(pnum, tname):
     """
-    Also unimplemented, checks if patient is allowed to take test. Returns bool.
+    Checks if patient is allowed to take test. Returns bool.
+
+    Victoria: Not needed for createPrescription. Might not be needed if
+    no other functions use this.
+    I don't think performTest needs this because Medical Test (in project info) says
+    "enter test result after a medical test is completed" which seems to imply this can
+    only be called if a test_record exists, which would mean createPrescription was
+    successful.
+    
     """
     if pnum == '1':
         return True
     else:
         return False
-
+    
 def performTest(pnum, tname, lname, tdate, tresult):
+    """ 
+    - Enter results after a medical test is completed. Lab name, test date and result can be updated.
+    - Cannot update any test_record that does not exist (implies createPrescription was successful)
     """
-    Also unimplemented, inserts test record into database. Shoudld only be
-    called after checkTest returns True.
-    """
+    
     return "performTest not yet implemented"
 
 def performSearch(stype, pnum = None, enum = None, sdate = None, edate = None,
