@@ -13,13 +13,13 @@ import uuid
 
 def createPrescription(enum, tname, pnum):
     # >>>> THIS HAS NOT BEEN TESTED <<<<<<
-""" 
+    """ 
     - Create a new test_record with enum, tname, pnum, test_id (generated upon creation), and
     prescription_date (uses current date). Lab_name, test_date, result are all null.
     - Rejects: Prescriptions which conflict with not_allowed. Also fails if enum, tname or pnum
     do not exist.
     - Returns: Prescription creation success or failure message.
-"""
+    """
     con = 'connectioninfo' # Is THIS SUPPOSED TO BE HERE? D:
     curs = con.cursor()
     
@@ -44,7 +44,7 @@ def createPrescription(enum, tname, pnum):
     queryStr=('SELECT health_care_no FROM not_allowed WHERE type_id=%s', (type_id))
     not_allowed=curs.execute(queryStr)
     for patient_num in not_allowed:
-        if patient_num = pnum:
+        if patient_num == pnum:
             return "Prescription creation failed. Patient is not allowed to take this test."
         
     # Create a new test record (date, result, lab are all null)
