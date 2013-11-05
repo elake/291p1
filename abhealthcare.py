@@ -9,6 +9,8 @@ import cx_Oracle
 import time
 
 # To generate a test_id
+# 10^9 values might not be sufficiently unique, later on we should increment up from the
+# largest existing test id.
 import uuid
 
 def createPrescription(pnum, tname, enum):
@@ -24,29 +26,30 @@ def createPrescription(pnum, tname, enum):
     """
     # Check given information matches a doctor and a patient in database.
     queryStr='SELECT employee_no FROM doctor WHERE employee_no={}'.format(enum)
-    curs.execute(queryStr)
-    is_doctor = curs.fetchone()
+    cur.execute(queryStr)
+    is_doctor = cur.fetchone()
     if is_doctor is None:
         return "Prescription creation failed. Doctor does not exist."
 
     queryStr='SELECT health_care_no FROM patient WHERE health_care_no={}'.format(pnum)
-    curs.execute(queryStr)
-    is_patient = curs.fetchone()
+    cur.execute(queryStr)
+    is_patient = cur.fetchone()
     if is_patient is None:
         return "Prescription creation failed. Patient does not exist. Please add patient using Update/Create Patient Info."
 
     # Shouldn't this be taken from test_type, not test_record?
     # Get type_id based off tname. Also check type_id exists.
     # queryStr=('SELECT type_id FROM test_record WHERE test_name=%s', (tname))
-    queryStr='SELECT type_id FROM test_type WHERE test_name={}'.format(tname)
-    curs.execute(queryStr)
-    type_id = curs.fetchone()
+    queryStr='SELECT type_id FROM test_type WHERE test_name=\'{}\''.format(tname)
+    cur.execute(queryStr)
+    type_id = cur.fetchone()
     if type_id is None:
         return "Prescription creation failed. Test type does not exist."
+    type_id = type_id[0]
 
     # Check prescription does not conflict with not_allowed.
     queryStr='SELECT health_care_no FROM not_allowed WHERE type_id={}'.format(type_id)
-    not_allowed=curs.execute(queryStr)
+    not_allowed=cur.execute(queryStr)
     for patient_num in not_allowed:
         if patient_num == pnum:
             return "Prescription creation failed. Patient is not allowed to take this test."
@@ -54,8 +57,9 @@ def createPrescription(pnum, tname, enum):
     # Create a new test record (date, result, lab are all null)
     test_id = uuid.uuid1().int>>98
     pdate = time.strftime('%d/%m/%y')
+    pdate = 'TO_DATE(\'{}\', \'dd/mm/yy\')'.format(pdate)
     
-    insertStr='INSERT into TEST_RECORD (test_id,type_id,patient_no,employee_no,medical_lab,result,prescribe_date,test_date) values ({}, {}, {}, {}, {}, {}, {}, {})'.format(test_id, type_id, pnum, enum, None, None, pdate, None)
+    insertStr='INSERT into TEST_RECORD (test_id,type_id,patient_no,employee_no,medical_lab,result,prescribe_date,test_date) values ({}, {}, {}, {}, {}, {}, {}, {})'.format(test_id, type_id, pnum, enum, 'NULL', 'NULL', pdate, 'NULL')
     cur.execute(insertStr)
     con.commit()
 
@@ -216,7 +220,7 @@ while not_connected:
         except cx_Oracle.DatabaseError:
             eg.msgbox("Error! Database credentials invalid!")
             not_connected = True
-curs = con.cursor()
+cur = con.cursor()
 
 #Main program body
 while 1:
