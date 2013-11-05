@@ -66,17 +66,22 @@ def createPrescription(pnum, tname, enum):
     # Inform user prescription successfully created
     return "Prescription created"
     
-def performTest(pnum, tname, lname, tdate, tresult):
+def performTest(test_id, lname, tresult):
     """ 
-    - Enter results after a medical test is completed. Lab name, test date and result can be updated.
-    - Cannot update any test_record that does not exist (implies createPrescription was successful)
+    - Enter results after a medical test is completed. Lab name, test date and
+      result can be updated.
+    - Cannot update any test_record that does not exist (implies
+      createPrescription was successful)
+    - Only called when checkTest has run successfully (patient has valid
+      prescription)
     """
     
     return "performTest not yet implemented"
 
 def checkTest(pnum, tname, enum):
     """
-    Checks if patient has a valid prescription. Returns bool.
+    Checks if patient has a valid prescription, and whether the prescription
+    has already been used. Returns (test_id, result).
     
     Victoria: Not needed for createPrescription. Might not be needed if
     no other functions use this.
@@ -90,10 +95,18 @@ def checkTest(pnum, tname, enum):
     assumes that the test has already been done. I should have made the
     description more specific.
     """
-    if pnum == '1':
-        return True
-    else:
-        return False
+    # Get type_id
+    queryStr='SELECT type_id FROM test_type WHERE test_name=\'{}\''.format(tname)
+    cur.execute(queryStr)
+    type_id = cur.fetchone()
+    if type_id is None:
+        eg.msgbox("Test type does not exist.", "Error!")
+        return None
+    type_id = type_id[0]
+
+    queryStr = 'SELECT test_id, result FROM test_record WHERE patient_no={} AND type_id={} AND employee_no={}'format(pnum, type_id, enum)
+    cur.execute(queryStr)
+    return cur.fetchone()
 
 def performSearch(stype, pnum = None, enum = None, sdate = None, edate = None,
                   ttype = None):
@@ -154,22 +167,27 @@ def guiTest():
         eg.msgbox('Operation cancelled')
         return
     pnum, tname, enum = fieldValues
-    msg = checkTest(pnum, tname, enum)
-    if msg:
+    valid_prescription = checkTest(int(pnum), tname, int(enum))
+    if valid_prescription:
+        test_id = valid_prescription[0]
+        result = valid_prescription[1]
+        if result:
+            eg.msgbox("Prescription already used!", "Error!")
+            return
         msg = "Patient eligibility confirmed. Enter test result."
         title = "Test Results"
-        fieldNames = ["Lab Name", "Test Date (mm/dd/yyyy)", "Test Result"]
+        fieldNames = ["Lab Name", "Test Result"]
         fieldValues = []
         fieldValues = eg.multenterbox(msg, title, fieldNames)
         if fieldValues == None:
             eg.msgbox('Operation cancelled')
             return
-        lname, tdate, tresult = fieldValues
-        msg = performTest(pnum, tname, lname, tdate, tresult)
+        lname, tresult = fieldValues
+        msg = performTest(test_id, lname, tresult)
         title = "Result"
         eg.msgbox(msg, title)
     else:
-        eg.msgbox("Patient is not eligible to receive this test.", "Error!")
+        eg.msgbox("Prescription info invalid. Please check patient no, ", "Error!")
 
 def guiUpdateInformation():
     """
