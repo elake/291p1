@@ -8,11 +8,6 @@ import sys
 import cx_Oracle
 import time
 
-# To generate a test_id
-# 10^9 values might not be sufficiently unique, later on we should increment up from the
-# largest existing test id.
-import uuid
-
 def createPrescription(pnum, tname, enum):
     """ 
     - Create a new test_record with enum, tname, pnum, test_id (generated upon creation), and
@@ -48,9 +43,12 @@ def createPrescription(pnum, tname, enum):
     for patient_num in not_allowed:
         if patient_num == pnum:
             return "Prescription creation failed. Patient is not allowed to take this test."
-        
+    
+
+    # Generate a new test_id incrementing up from the last
+    # Assumes all inserts have followed test_id incrementing procedure
+    test_id = cur.execute('SELECT COUNT(test_id) FROM test_record').fetchone()[0]+1
     # Create a new test record (date, result, lab are all null)
-    test_id = uuid.uuid1().int>>98
     pdate = time.strftime('%d/%m/%y')
     pdate = 'TO_DATE(\'{}\', \'dd/mm/yy\')'.format(pdate)
     
@@ -188,8 +186,7 @@ def guiUpdateInformation():
     """
     Interface for updating or creating a patient.
     """
-    msg = "Please enter the patient information."   eg.msgbox("Prescription info invalid. Please check all fields. ", "Error!")
-
+    msg = "Please enter the patient information."
     title = "Patient Info"
     fieldNames = ["Patient Healthcare #", "Name", "Address",
                   "Birth Day (mm/dd/yyyy)", "Phone Number"]
