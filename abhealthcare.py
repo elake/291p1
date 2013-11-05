@@ -104,7 +104,7 @@ def checkTest(pnum, tname, enum):
         return None
     type_id = type_id[0]
 
-    queryStr = 'SELECT test_id, result FROM test_record WHERE patient_no={} AND type_id={} AND employee_no={}'format(pnum, type_id, enum)
+    queryStr = 'SELECT test_id, result FROM test_record WHERE patient_no={} AND type_id={} AND employee_no={}'.format(pnum, type_id, enum)
     cur.execute(queryStr)
     return cur.fetchone()
 
