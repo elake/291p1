@@ -14,9 +14,6 @@ import time
 import uuid
 
 def createPrescription(pnum, tname, enum):
-    # >>>> THIS HAS NOT BEEN TESTED <<<<<<
-    # I changed your string formatting to use .format() instead of %s, because %s is slated
-    # for removal in upcoming versions of Python. -Eldon
     """ 
     - Create a new test_record with enum, tname, pnum, test_id (generated upon creation), and
     prescription_date (uses current date). Lab_name, test_date, result are all null.
@@ -37,9 +34,7 @@ def createPrescription(pnum, tname, enum):
     if is_patient is None:
         return "Prescription creation failed. Patient does not exist. Please add patient using Update/Create Patient Info."
 
-    # Shouldn't this be taken from test_type, not test_record?
     # Get type_id based off tname. Also check type_id exists.
-    # queryStr=('SELECT type_id FROM test_record WHERE test_name=%s', (tname))
     queryStr='SELECT type_id FROM test_type WHERE test_name=\'{}\''.format(tname)
     cur.execute(queryStr)
     type_id = cur.fetchone()
