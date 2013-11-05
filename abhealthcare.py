@@ -74,6 +74,27 @@ def performTest(pnum, tname, lname, tdate, tresult):
     
     return "performTest not yet implemented"
 
+def checkTest(pnum, tname, enum):
+    """
+    Checks if patient has a valid prescription. Returns bool.
+    
+    Victoria: Not needed for createPrescription. Might not be needed if
+    no other functions use this.
+    I don't think performTest needs this because Medical Test (in project info
+    ) says "enter test result after a medical test is completed" which seems to
+    imply this can only be called if a test_record exists, which would mean
+    createPrescription was successful.
+    
+    Eldon: This is used in guiTest() to verify that the patient has a valid
+    prescription. It's called before performTest() because calling performTest()
+    assumes that the test has already been done. I should have made the
+    description more specific.
+    """
+    if pnum == '1':
+        return True
+    else:
+        return False
+
 def performSearch(stype, pnum = None, enum = None, sdate = None, edate = None,
                   ttype = None):
     """
@@ -113,6 +134,9 @@ def guiPrescription():
     fieldNames = ["Patient Healthcare #", "Test Name", "Doctor Employee #"]
     fieldValues = []
     fieldValues = eg.multenterbox(msg, title, fieldNames)
+    if fieldValues == None:
+        eg.msgbox('Operation cancelled')
+        return
     msg = createPrescription(int(fieldValues[0]), fieldValues[1], int(fieldValues[2]))
     title = "Result"
     eg.msgbox(msg, title)
@@ -123,17 +147,23 @@ def guiTest():
     """
     msg = "Enter test information to confirm patient eligibility. Enter 1 as patient number to test successful patient eligibility."
     title = "Test Details"
-    fieldNames = ["Patient Healthcare #", "Test Name"]
+    fieldNames = ["Patient Healthcare #", "Test Name", "Employee #"]
     fieldValues = []
     fieldValues = eg.multenterbox(msg, title, fieldNames)
-    pnum, tname = fieldValues
-    msg = checkTest(pnum, tname)
+    if fieldValues == None:
+        eg.msgbox('Operation cancelled')
+        return
+    pnum, tname, enum = fieldValues
+    msg = checkTest(pnum, tname, enum)
     if msg:
         msg = "Patient eligibility confirmed. Enter test result."
         title = "Test Results"
         fieldNames = ["Lab Name", "Test Date (mm/dd/yyyy)", "Test Result"]
         fieldValues = []
         fieldValues = eg.multenterbox(msg, title, fieldNames)
+        if fieldValues == None:
+            eg.msgbox('Operation cancelled')
+            return
         lname, tdate, tresult = fieldValues
         msg = performTest(pnum, tname, lname, tdate, tresult)
         title = "Result"
@@ -151,6 +181,9 @@ def guiUpdateInformation():
                   "Birth Day (mm/dd/yyyy)", "Phone Number"]
     fieldValues = []
     fieldValues = eg.multenterbox(msg, title, fieldNames)
+    if fieldValues == None:
+            eg.msgbox('Operation cancelled')
+            return
     pnum, name, address, birthday, phone = fieldValues
     msg = informationUpdate(pnum, name, address, birthday, phone)
     title = "Result"
@@ -171,6 +204,9 @@ def guiSearch():
         fieldValues = []
         # Should later be changed to enterbox if only needs one entry
         fieldValues = eg.multenterbox(msg, title, fieldNames)
+        if fieldValues == None:
+            eg.msgbox('Operation cancelled')
+            return
         msg = performSearch(ptr, pnum = fieldValues[0])
         title = "Result"
         eg.msgbox(msg, title)
@@ -181,6 +217,9 @@ def guiSearch():
                       "End Date   (mm/dd/yyyy)"]
         fieldValues = []
         fieldValues = eg.multenterbox(msg, title, fieldNames)
+        if fieldValues == None:
+            eg.msgbox('Operation cancelled')
+            return
         enum, startdate, enddate = fieldValues
         msg = performSearch(dpr, enum = enum, sdate = startdate,
                             edate = enddate)
@@ -193,6 +232,9 @@ def guiSearch():
         fieldNames = ["Test Name"]
         fieldValues = []
         fieldValues = eg.multenterbox(msg, title, fieldNames)
+        if fieldValues == None:
+            eg.msgbox('Operation cancelled')
+            return
         msg = performSearch(aa, ttype = fieldValues[0])
         title = "Result"
         eg.msgbox(msg, title)
@@ -245,4 +287,5 @@ while 1:
     if eg.ccbox(msg, title, ('Continue', 'Exit')):     # show a Continue/Cancel dialog
         pass  # user chose Continue
     else:
+        con.close()
         sys.exit(0)           # user chose Cancelimport curses
