@@ -193,7 +193,8 @@ def guiUpdateInformation():
     """
     Interface for updating or creating a patient.
     """
-    msg = "Please enter the patient information."
+    msg = "Please enter the patient information."   eg.msgbox("Prescription info invalid. Please check all fields. ", "Error!")
+
     title = "Patient Info"
     fieldNames = ["Patient Healthcare #", "Name", "Address",
                   "Birth Day (mm/dd/yyyy)", "Phone Number"]
