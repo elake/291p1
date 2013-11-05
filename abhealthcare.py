@@ -99,10 +99,26 @@ def performSearch(stype, pnum = None, enum = None, sdate = None, edate = None,
 
 def informationUpdate(pnum, name, address, birthday, phone):
     """
-    Also unimplemented, updates a patient record or creates if pnum does not
-    exist. Returns "Patient created" or "Patient updated" if successful.
+    Updates a patient record or creates if pnum does not
+    exist. Returns status.
     """
-    return "informationUpdate not yet implemented"
+    # Check if patient exists
+    queryStr = 'SELECT health_care_no from patient where health_care_no={}'.format(pnum)
+    cur.execute(queryStr)
+    if cur.fetchone() is None:
+        cont = eg.ccbox("Patient does not exist. Create with supplied information?")
+        if cont == 0: return "Entry cancelled."
+        insertStr = 'INSERT INTO patient (health_care_no, name, address, birth_day, phone) VALUES ({},\'{}\',\'{}\',to_date(\'{}\', \'mm/dd/yyyy\'),{})'.format(pnum, name, address, birthday, phone)
+        cur.execute(insertStr)
+        con.commit()
+        return "Patient created successfully"
+    else:
+        cont = eg.ccbox("Patient already exists. Update information?")
+        if cont == 0: return "Entry cancelled."
+        updateStr = 'UPDATE patient SET name={}, address={}, birth_day=to_date(\'{}\', \'mm/dd/yyyy\'), phone={} WHERE health_care_no={}'.format(name, address, birthday, phone, pnum)
+        cur.execute(updateStr)
+        con.commit()
+        return "Patient updated successfully"
 
 import easygui as eg
 import sys
@@ -174,7 +190,7 @@ def guiUpdateInformation():
     """
     Interface for updating or creating a patient.
     """
-    msg = "Please enter the patient information."
+    msg = "Please enter the patient information. Note that empty boxes will also update, allowing you to delete patient information."
     title = "Patient Info"
     fieldNames = ["Patient Healthcare #", "Name", "Address",
                   "Birth Day (mm/dd/yyyy)", "Phone Number"]
@@ -184,6 +200,10 @@ def guiUpdateInformation():
             eg.msgbox('Operation cancelled')
             return
     pnum, name, address, birthday, phone = fieldValues
+    try: pnum = int(pnum)
+    except ValueError: pnum = 'NULL'
+    try: phone = int(phone)
+    except ValueError: phone = 'NULL'
     msg = informationUpdate(pnum, name, address, birthday, phone)
     title = "Result"
     eg.msgbox(msg, title)
