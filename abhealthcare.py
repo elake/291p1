@@ -13,7 +13,8 @@ import time
 # largest existing test id.
 import uuid
 
-def createPrescription(pnum, tname, enum):
+
+def createPrescription(pnum, pname, tname, enum, ename):
     """ 
     - Create a new test_record with enum, tname, pnum, test_id (generated upon creation), and
     prescription_date (uses current date). Lab_name, test_date, result are all null.
@@ -139,13 +140,13 @@ def guiPrescription():
     """
     msg = "Please enter the prescription information."
     title = "Prescription Info"
-    fieldNames = ["Patient Healthcare #", "Test Name", "Doctor Employee #"]
+    fieldNames = ["Patient Healthcare #", "Patient Name", "Test Name", "Doctor Employee #", "Doctor Name"]
     fieldValues = []
     fieldValues = eg.multenterbox(msg, title, fieldNames)
     if fieldValues == None:
         eg.msgbox('Operation cancelled')
         return
-    msg = createPrescription(int(fieldValues[0]), fieldValues[1], int(fieldValues[2]))
+    msg = createPrescription(int(fieldValues[0]), fieldValues[1], fieldValues[2], int(fieldValue[3]), fieldValues[4])
     title = "Result"
     eg.msgbox(msg, title)
 
@@ -188,7 +189,8 @@ def guiUpdateInformation():
     """
     Interface for updating or creating a patient.
     """
-    msg = "Please enter the patient information."   eg.msgbox("Prescription info invalid. Please check all fields. ", "Error!")
+    msg = "Please enter the patient information."
+    eg.msgbox("Prescription info invalid. Please check all fields. ", "Error!")
 
     title = "Patient Info"
     fieldNames = ["Patient Healthcare #", "Name", "Address",
