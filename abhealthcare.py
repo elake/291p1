@@ -125,18 +125,6 @@ def checkTest(pnum, tname, enum):
     """
     Checks if patient has a valid prescription, and whether the prescription
     has already been used. Returns (test_id, result).
-    
-    Victoria: Not needed for createPrescription. Might not be needed if
-    no other functions use this.
-    I don't think performTest needs this because Medical Test (in project info
-    ) says "enter test result after a medical test is completed" which seems to
-    imply this can only be called if a test_record exists, which would mean
-    createPrescription was successful.
-    
-    Eldon: This is used in guiTest() to verify that the patient has a valid
-    prescription. It's called before performTest() because calling performTest()
-    assumes that the test has already been done. I should have made the
-    description more specific.
     """
     # Get type_id
     queryStr='SELECT type_id FROM test_type WHERE test_name=\'{}\''.format(tname)
@@ -193,7 +181,11 @@ def guiPrescription():
     if fieldValues == None:
         eg.msgbox('Operation cancelled')
         return
+<<<<<<< HEAD
     msg = createPrescription((fieldValues[0]), fieldValues[1], fieldValues[2], (fieldValues[3]), fieldValues[4])
+=======
+    msg = createPrescription(int(fieldValues[0]), fieldValues[1], fieldValues[2], int(fieldValues[3]), fieldValues[4])
+>>>>>>> 6a57323bdc2257b7b896377b851e337d2f710536
     title = "Result"
     eg.msgbox(msg, title)
 
