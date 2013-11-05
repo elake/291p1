@@ -11,8 +11,10 @@ import time
 # To generate a test_id
 import uuid
 
-def createPrescription(enum, tname, pnum):
+def createPrescription(pnum, tname, enum):
     # >>>> THIS HAS NOT BEEN TESTED <<<<<<
+    # I changed your string formatting to use .format() instead of %s, because %s is slated
+    # for removal in upcoming versions of Python. -Eldon
     """ 
     - Create a new test_record with enum, tname, pnum, test_id (generated upon creation), and
     prescription_date (uses current date). Lab_name, test_date, result are all null.
@@ -20,28 +22,30 @@ def createPrescription(enum, tname, pnum):
     do not exist.
     - Returns: Prescription creation success or failure message.
     """
-    con = 'connectioninfo' # Is THIS SUPPOSED TO BE HERE? D:
-    curs = con.cursor()
-    
     # Check given information matches a doctor and a patient in database.
-    queryStr=('SELECT employee_no FROM doctor WHERE employee_no=%s', (enum))
-    is_doctor=curs.execute(queryStr)
+    queryStr='SELECT employee_no FROM doctor WHERE employee_no={}'.format(enum)
+    curs.execute(queryStr)
+    is_doctor = curs.fetchone()
     if is_doctor is None:
         return "Prescription creation failed. Doctor does not exist."
 
-    queryStr=('SELECT health_care_no FROM patient WHERE health_care_no=%s', (pnum))
-    is_patient=cur.execute(queryStr)
+    queryStr='SELECT health_care_no FROM patient WHERE health_care_no={}'.format(pnum)
+    curs.execute(queryStr)
+    is_patient = curs.fetchone()
     if is_patient is None:
         return "Prescription creation failed. Patient does not exist. Please add patient using Update/Create Patient Info."
 
+    # Shouldn't this be taken from test_type, not test_record?
     # Get type_id based off tname. Also check type_id exists.
-    queryStr=('SELECT type_id FROM test_record WHERE test_name=%s', (tname))
-    type_id=curs.execute(queryStr)
+    # queryStr=('SELECT type_id FROM test_record WHERE test_name=%s', (tname))
+    queryStr='SELECT type_id FROM test_type WHERE test_name={}'.format(tname)
+    curs.execute(queryStr)
+    type_id = curs.fetchone()
     if type_id is None:
         return "Prescription creation failed. Test type does not exist."
 
     # Check prescription does not conflict with not_allowed.
-    queryStr=('SELECT health_care_no FROM not_allowed WHERE type_id=%s', (type_id))
+    queryStr='SELECT health_care_no FROM not_allowed WHERE type_id={}'.format(type_id)
     not_allowed=curs.execute(queryStr)
     for patient_num in not_allowed:
         if patient_num == pnum:
@@ -51,29 +55,12 @@ def createPrescription(enum, tname, pnum):
     test_id = uuid.uuid1().int>>98
     pdate = time.strftime('%d/%m/%y')
     
-    insertStr=("INSERT into MOVIE values (%s, %s, %s, %s, %s, %s, %s, %s)", (test_id, type_id, pnum, enum, none, none, pdate, none))
+    insertStr='INSERT into TEST_RECORD (test_id,type_id,patient_no,employee_no,medical_lab,result,prescribe_date,test_date) values ({}, {}, {}, {}, {}, {}, {}, {})'.format(test_id, type_id, pnum, enum, None, None, pdate, None)
     cur.execute(insertStr)
     con.commit()
 
     # Inform user prescription successfully created
     return "Prescription created"
-
-def checkTest(pnum, tname):
-    """
-    Checks if patient is allowed to take test. Returns bool.
-
-    Victoria: Not needed for createPrescription. Might not be needed if
-    no other functions use this.
-    I don't think performTest needs this because Medical Test (in project info) says
-    "enter test result after a medical test is completed" which seems to imply this can
-    only be called if a test_record exists, which would mean createPrescription was
-    successful.
-    
-    """
-    if pnum == '1':
-        return True
-    else:
-        return False
     
 def performTest(pnum, tname, lname, tdate, tresult):
     """ 
@@ -111,7 +98,8 @@ ptr = "Patient Test Records"
 dpr = "Doctor Prescription Record"
 aa = "Alarming Age"
 
-# GUI input functions for the four basic application processes.
+# GUI input functions for the basic application processes.
+
 def guiPrescription():
     """
     Interface for creating a new prescription.
@@ -121,7 +109,7 @@ def guiPrescription():
     fieldNames = ["Patient Healthcare #", "Test Name", "Doctor Employee #"]
     fieldValues = []
     fieldValues = eg.multenterbox(msg, title, fieldNames)
-    msg = createPrescription(fieldValues[0], fieldValues[1], fieldValues[2])
+    msg = createPrescription(int(fieldValues[0]), fieldValues[1], int(fieldValues[2]))
     title = "Result"
     eg.msgbox(msg, title)
 
@@ -205,7 +193,32 @@ def guiSearch():
         title = "Result"
         eg.msgbox(msg, title)
 
+#Login process (Could be made into function, but I forget how scoping)
+not_connected = True
+while not_connected:
+    msg = "Please enter login credentials for the Oracle database."
+    title = "Oracle DB login"
+    fieldNames = ["Username", "Host", "Port", "SID",  "Password"]
+    fieldValues = eg.multpasswordbox(msg, title, fieldNames)
+    if fieldValues == None:
+        msg = "Do you want to continue using ABHealthCare?"
+        title = "Continue?"
+        if eg.ccbox(msg, title, ('Continue', 'Exit')):     # show a Continue/Cancel dialog
+            pass  # user chose Continue
+        else:
+            sys.exit(0)           # user chose Cancelimport curses
+    else:
+        a, b, c, d, e = fieldValues
+        constring = '{}/{}@{}:{}/{}'.format(a, e, b, c, d)
+        try:
+            not_connected = False
+            con = cx_Oracle.connect(constring)
+        except cx_Oracle.DatabaseError:
+            eg.msgbox("Error! Database credentials invalid!")
+            not_connected = True
+curs = con.cursor()
 
+#Main program body
 while 1:
     msg ="Welcome to ABHealthCare, please select an option."
     title = "ABHealthCare Control Panel"
