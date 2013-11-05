@@ -4,6 +4,8 @@ in the labs), and currently has pass functions for Oracle implementation.
 The first five functions below need to be implemented.
 """
 
+# >>> INTS ARE MISSING <<<
+
 import sys
 import cx_Oracle
 import time
@@ -16,19 +18,67 @@ def createPrescription(pnum, pname, tname, enum, ename):
     do not exist.
     - Returns: Prescription creation success or failure message.
     """
-    # Check given information matches a doctor and a patient in database.
-    queryStr='SELECT employee_no FROM doctor WHERE employee_no={}'.format(enum)
-    cur.execute(queryStr)
-    is_doctor = cur.fetchone()
-    if is_doctor is None:
-        return "Prescription creation failed. Doctor does not exist."
+    # Check that pnum or pname is supplied.
+    if (pnum is '' and pname is ''):
+        return "Prescription creation failed. Either a patient health care number or a patient name is required."
 
-    queryStr='SELECT health_care_no FROM patient WHERE health_care_no={}'.format(pnum)
-    cur.execute(queryStr)
-    is_patient = cur.fetchone()
-    if is_patient is None:
-        return "Prescription creation failed. Patient does not exist. Please add patient using Update/Create Patient Info."
+    # Check that tname is supplied.
+    if tname is '':
+        return "Prescription creation failed. Test name is required."
 
+    # Check that enum or ename is supplied.
+    if (enum is '' and ename is ''):
+        return "Prescription creation failed. Either a doctor employee number or a doctor name is required."
+
+    # If enum was provided, check it exists.
+    if (enum != ''):
+        queryStr='SELECT employee_no FROM doctor WHERE employee_no={}'.format(enum)
+        cur.execute(queryStr)
+        is_doctor = cur.fetchone()
+        if is_doctor is None:
+            return "Prescription creation failed. Doctor does not exist."
+        # If enum and ename were both provided, check that enum matches corresponding ename.
+        elif (ename != ''):
+            queryStr='SELECT p.name FROM patient p, doctor d  WHERE (employee_no={} AND p.health_care_no=d.health_care_no)'.format(enum)
+            cur.execute(queryStr)
+            matching_name = cur.fetchone()
+            if (matching_name != ename):
+                return "Prescription creation failed. Doctor employee number does not match doctor name provided."    
+        # If enum was the only thing provided for doctor and matches a doctor in the database, no further work required.
+        else: pass 
+
+    # If pnum was provided, check it exists.
+    if (pnum != ''):
+        queryStr='SELECT health_care_no FROM patient WHERE health_care_no={}'.format(pnum)
+        cur.execute(queryStr)
+        is_patient = cur.fetchone()
+        if is_patient is None:
+            return "Prescription creation failed. Patient does not exist. Please add patient using Update/Create Patient Info."
+        # If pnum and pname were both provided, check that pnum matches corresponding pname.
+        elif (pname != ''):
+            queryStr='SELECT name FROM patient WHERE health_care_no={}'.format(pnum)
+            cur.execute(queryStr)
+            pmatching_name = cur.fetchone()
+            if (pmatching_name != pname):
+                return "Prescription creation failed. Patient health care # does not match patient name provided."    
+        # If pnum was the only thing provided for patient and matches a patient in the database, no further work required.
+        else: pass 
+
+    # If only ename was provided for doctor information, check it exists.
+    if (ename != ''):
+        queryStr='SELECT p.name FROM patient p, doctor d  WHERE (p.name={} AND p.health_care_no=d.health_care_no)'.format(ename)
+        cur.execute(queryStr)
+        is_ename=cur.fetchone()
+        if is_ename is None:
+            return "Prescription creation failed. Doctor name does not exists."
+        # Print all doctor names found to gui, along with their employee num and clinic address for user.
+        queryStr='SELECT p.name, d.employee_no, d.clinic_address FROM patient p, doctor d WHERE (p.name={} AND p.health_care_no=d.health_care_no)'.format(ename)
+        doc_info=cur.fetchall()
+        doc_list=[]
+        for doc in doc_info:
+            doc_list.append(doc)
+        choice = eg.choicebox("Doctor information matching provided name", "Title goes here", doc_list)      
+ 
     # Get type_id based off tname. Also check type_id exists.
     queryStr='SELECT type_id FROM test_type WHERE test_name=\'{}\''.format(tname)
     cur.execute(queryStr)
@@ -147,7 +197,11 @@ def guiPrescription():
     if fieldValues == None:
         eg.msgbox('Operation cancelled')
         return
+<<<<<<< HEAD
+    msg = createPrescription((fieldValues[0]), fieldValues[1], fieldValues[2], (fieldValues[3]), fieldValues[4])
+=======
     msg = createPrescription(int(fieldValues[0]), fieldValues[1], fieldValues[2], int(fieldValues[3]), fieldValues[4])
+>>>>>>> 6a57323bdc2257b7b896377b851e337d2f710536
     title = "Result"
     eg.msgbox(msg, title)
 
