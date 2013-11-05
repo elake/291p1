@@ -187,7 +187,7 @@ def guiTest():
         title = "Result"
         eg.msgbox(msg, title)
     else:
-        eg.msgbox("Prescription info invalid. Please check patient no, ", "Error!")
+        eg.msgbox("Prescription info invalid. Please check all fields. ", "Error!")
 
 def guiUpdateInformation():
     """
