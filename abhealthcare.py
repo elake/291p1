@@ -132,12 +132,11 @@ def createPrescription(pnum, pname, tname, enum, ename):
     queryStr='SELECT health_care_no FROM not_allowed WHERE type_id={}'.format(type_id)
     cur.execute(queryStr)
     not_allowed = cur.fetchall()
-    print("Not allowed (unformatted):", not_allowed)
     for patient_num in not_allowed:
-        patient_num = patient_num[0]
-        print("Patient num:", patient_num, "Given Num:", pnum)
-        if (patient_num == pnum):
-            print("Conflict")
+        # Cast to ints for comparison
+        patient_num = int(patient_num[0])
+        temp_pnum = int(pnum)
+        if (patient_num == temp_pnum):
             return "Prescription creation failed. Patient is not allowed to take this test."
 
     # Generate a new test_id incrementing up from the last
