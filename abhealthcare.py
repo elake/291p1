@@ -189,12 +189,76 @@ def checkTest(pnum, tname, enum):
     cur.execute(queryStr)
     return cur.fetchone()
 
+
 def performSearch(stype, pnum = None, enum = None, sdate = None, edate = None,
-                  ttype = None):
+                  ttype = None, pname = None):
     """
-    Also unimplemented, performs one of three search types and returns
-    the result.
+    Three types of search:
+    1) List health_care_no, patient name, test type name, testing date, and test result of all records by inputing either a
+    health_care_no or a patient name.
+    2) List health_care_no, patient name, test type name, and prescribe date of all tests prescribed by a doctor during a specified
+    time period. The user needs to enter the doctor name or employee_no and the start and end dates to which the tests were prescribed.
+    3) Display the health_care_no, name, address, and phone number of all patients who have reached the alarming age of a given test type,
+    but have never taken a test of that type by requesting the test type name.
     """
+
+    # Patient Record Search: List health_care_no, patient name, test type name, testing date, and test result of all records
+    # by inputing either a health_care_no or a patient name.
+    if (stype == ptr): 
+        # If pnum was provided, check it exists.
+        if (pnum != ''):
+            queryStr='SELECT health_care_no FROM patient WHERE health_care_no={}'.format(pnum)
+            cur.execute(queryStr)
+            is_patient = cur.fetchone()
+            if is_patient is None:
+                return "Error. Patient number does not exist. Please add patient using Update/Create Patient Info."
+            # If pnum and pname were both provided, check that pnum matches corresponding pname.
+            elif (pname != ''):
+                queryStr='SELECT name FROM patient WHERE health_care_no={}'.format(pnum)
+                cur.execute(queryStr)
+                pmatching_name = cur.fetchone()
+                pmatching_name = pmatching_name[0]
+                if (pmatching_name != pname):
+                    return "Error. Patient health care # does not match patient name provided."    
+            # If pnum was the only thing provided for patient and matches a patient in the database, no further work required.
+            else:
+                pass
+        # If only pname was provided for patient information, check it exists.
+        elif (pname != ''):
+            queryStr='SELECT name FROM patient WHERE name=\'{}\''.format(pname)
+            cur.execute(queryStr)
+            is_pname=cur.fetchone()
+            if is_pname is None:
+                return "Error. Patient name does not exist."
+            # If there are multiple patients: Print all patient names found to gui, along with their some of their information.
+            queryStr='SELECT name, health_care_no, phone FROM patient WHERE name=\'{}\''.format(pname)
+            cur.execute(queryStr)
+            patient_info=cur.fetchall()
+            if len(patient_info) > 1:
+                patient_list=[]
+                for patient in patient_info:
+                    patient_list.append(patient)
+                # Get pnum for selected patient for new test_record.
+                right_patient = eg.choicebox("Select the correct patient information:", "Patient Name Search Results", patient_list)
+                right_patient = right_patient.lstrip('(')
+                right_patient = right_patient.rstrip(')')
+                right_patient = right_patient.split(",")
+                pnum = right_patient[1].strip("'")
+            else:
+                # If there is only 1 patient with that name, pnum is easy to get.
+                pnum = patient_info[0]
+                pnum = pnum[1]
+        # One of pnum or pname is required.
+        else:
+            return "Error. Either a patient name or a patient health care # is required to perform search."
+        # Now that information is known to be correct, perform the search. 
+        queryStr='SELECT p.health_care_no, p.name, tt.test_name, tr.test_date, tr.result FROM patient p, test_type tt, test_record tr WHERE health_care_no={} AND tr.patient_no=p.health_care_no AND tr.type_id=tt.type_id ORDER BY p.health_care_no, p.name, tt.test_name, tr.test_date, tr.result'.format(pnum)
+        cur.execute(queryStr)
+        record_list=cur.fetchall()
+        formatted_records=",".join("(%s,%s,%s,%s,%s)" % tup for tup in record_list)
+        formatted_records.split(",")
+        eg.textbox("Search Results","itle",formatted_records)
+
     return "performSearch not yet implemented"
 
 def informationUpdate(pnum, name, address, birthday, phone):
@@ -317,16 +381,16 @@ def guiSearch():
     choices = [ptr, dpr, aa]
     choice = eg.choicebox(msg, title, choices)
     if choice == ptr:
-        msg = "Please enter the patient healthcare number."
+        msg = "Please enter the patient healthcare number or patient name."
         title = "Patient Test Record Search"
-        fieldNames = ["Patient Healthcare #"]
+        fieldNames = ["Patient Healthcare #", "Patient Name"]
         fieldValues = []
         # Should later be changed to enterbox if only needs one entry
         fieldValues = eg.multenterbox(msg, title, fieldNames)
         if fieldValues == None:
             eg.msgbox('Operation cancelled')
             return
-        msg = performSearch(ptr, pnum = fieldValues[0])
+        msg = performSearch(ptr, pnum = fieldValues[0], pname = fieldValues[1])
         title = "Result"
         eg.msgbox(msg, title)
     elif choice == dpr:
