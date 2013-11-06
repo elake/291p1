@@ -126,63 +126,6 @@ def createPrescription(pnum, pname, tname, enum, ename):
     else:
         return "Patient information error."
 
-
-
-    """
-    # If only ename was provided for doctor information, check it exists.
-    if (ename != ''):
-        queryStr='SELECT p.name FROM patient p, doctor d  WHERE (p.name=\'{}\' AND p.health_care_no=d.health_care_no)'.format(ename)
-        cur.execute(queryStr)
-        is_ename=cur.fetchone()
-        if is_ename is None:
-            return "Prescription creation failed. Doctor name does not exists."
-        # If there are multiple doctors: Print all doctor names found to gui, along with their doctor information. 
-        queryStr='SELECT p.name, d.employee_no, d.clinic_address, d.office_phone FROM patient p, doctor d WHERE (p.name=\'{}\' AND p.health_care_no=d.health_care_no)'.format(ename)
-        cur.execute(queryStr)
-        doc_info=cur.fetchall()
-        if len(doc_info) > 1:
-            doc_list=[]
-            for doc in doc_info:
-                doc_list.append(doc)
-            right_doc = eg.choicebox("Select the correct doctor information:", "Doctor Name Search Results", doc_list)   
-            right_doc = right_doc.lstrip('(')
-            right_doc = right_doc.rstrip(')')
-            right_doc = right_doc.split(",")
-            # Get the enum from selected doctor for new test_record
-            enum = right_doc[1].strip("'")
-        else:
-            # If there is only 1 doctor with that name, enum is easy to get.
-            enum = doc_info[0]
-            enum = enum[1]
-        
-    
-    # If only pname was provided for patient information, check it exists.
-    if (pname != ''):
-        queryStr='SELECT name FROM patient WHERE name=\'{}\''.format(pname)
-        cur.execute(queryStr)
-        is_pname=cur.fetchone()
-        if is_pname is None:
-            return "Prescription creation failed. Patient name does not exist."
-        # If there are multiple patients: Print all patient names found to gui, along with their some of their information.
-        queryStr='SELECT name, health_care_no, phone FROM patient WHERE name=\'{}\''.format(pname)
-        cur.execute(queryStr)
-        patient_info=cur.fetchall()
-        if len(patient_info) > 1:
-            patient_list=[]
-            for patient in patient_info:
-                patient_list.append(patient)
-            right_patient = eg.choicebox("Select the correct patient information:", "Patient Name Search Results", patient_list)
-            right_patient = right_patient.lstrip('(')
-            right_patient = right_patient.rstrip(')')
-            right_patient = right_patient.split(",")
-            # Get pnum from selected patient for new test_record
-            pnum = right_patient[1].strip("'")
-        else:
-            # If there is only 1 patient with that name, pnum is easy to get.
-            pnum = patient_info[0]
-            pnum = pnum[1]
-    """ 
-
     # Get type_id based off tname. Also check type_id exists.
     queryStr='SELECT type_id FROM test_type WHERE test_name=\'{}\''.format(tname)
     cur.execute(queryStr)
