@@ -18,18 +18,19 @@ def createPrescription(pnum, pname, tname, enum, ename):
     do not exist.
     - Returns: Prescription creation success or failure message.
     """
+
+    # Check all required fields are provided immediately.
     # Check that pnum or pname is supplied.
     if (pnum is '' and pname is ''):
         return "Prescription creation failed. Either a patient health care number or a patient name is required."
-
     # Check that tname is supplied.
     if tname is '':
         return "Prescription creation failed. Test name is required."
-
     # Check that enum or ename is supplied.
     if (enum is '' and ename is ''):
         return "Prescription creation failed. Either a doctor employee number or a doctor name is required."
 
+    # Check the provided information for doctor exists and is correct. (enum and/or ename)
     # If enum was provided, check it exists.
     if (enum != ''):
         queryStr='SELECT employee_no FROM doctor WHERE employee_no={}'.format(enum)
@@ -48,7 +49,36 @@ def createPrescription(pnum, pname, tname, enum, ename):
         # If enum was the only thing provided for doctor and matches a doctor in the database, no further work required.
         else:
             pass
+    # If only ename was provided for doctor information, check it exists.
+    elif (ename != ''):
+        queryStr='SELECT p.name FROM patient p, doctor d  WHERE (p.name=\'{}\' AND p.health_care_no=d.health_care_no)'.format(ename)
+        cur.execute(queryStr)
+        is_ename=cur.fetchone()
+        if is_ename is None:
+            return "Prescription creation failed. Doctor name does not exists."
+        # If there are multiple doctors: Print all doctor names found to gui, along with their employee_no, clinic_address and office_phone. 
+        queryStr='SELECT p.name, d.employee_no, d.clinic_address, d.office_phone FROM patient p, doctor d WHERE (p.name=\'{}\' AND p.health_care_no=d.health_care_no)'.format(ename)
+        cur.execute(queryStr)
+        doc_info=cur.fetchall()
+        if len(doc_info) > 1:
+            doc_list=[]
+            for doc in doc_info:
+                doc_list.append(doc)
+            # Get the enum for selected doctor for new test_record.
+            right_doc = eg.choicebox("Select the correct doctor information:", "Doctor Name Search Results", doc_list)   
+            right_doc = right_doc.lstrip('(')
+            right_doc = right_doc.rstrip(')')
+            right_doc = right_doc.split(",")
+            enum = right_doc[1].strip("'")
+        else:
+            # If there is only 1 doctor with that name, enum is easy to get.
+            enum = doc_info[0]
+            enum = enum[1]
+    # All conditions should be covered by this point.
+    else: 
+        return "Doctor information error."
 
+    # Check the provided information for patient exists and it correct. (pnum and/or pname)
     # If pnum was provided, check it exists.
     if (pnum != ''):
         queryStr='SELECT health_care_no FROM patient WHERE health_care_no={}'.format(pnum)
@@ -67,7 +97,38 @@ def createPrescription(pnum, pname, tname, enum, ename):
         # If pnum was the only thing provided for patient and matches a patient in the database, no further work required.
         else:
             pass
+    # If only pname was provided for patient information, check it exists.
+    elif (pname != ''):
+        queryStr='SELECT name FROM patient WHERE name=\'{}\''.format(pname)
+        cur.execute(queryStr)
+        is_pname=cur.fetchone()
+        if is_pname is None:
+            return "Prescription creation failed. Patient name does not exist."
+        # If there are multiple patients: Print all patient names found to gui, along with their some of their information.
+        queryStr='SELECT name, health_care_no, phone FROM patient WHERE name=\'{}\''.format(pname)
+        cur.execute(queryStr)
+        patient_info=cur.fetchall()
+        if len(patient_info) > 1:
+            patient_list=[]
+            for patient in patient_info:
+                patient_list.append(patient)
+            # Get pnum for selected patient for new test_record.
+            right_patient = eg.choicebox("Select the correct patient information:", "Patient Name Search Results", patient_list)
+            right_patient = right_patient.lstrip('(')
+            right_patient = right_patient.rstrip(')')
+            right_patient = right_patient.split(",")
+            pnum = right_patient[1].strip("'")
+        else:
+            # If there is only 1 patient with that name, pnum is easy to get.
+            pnum = patient_info[0]
+            pnum = pnum[1]
+    # All conditions should be covered at this point.
+    else:
+        return "Patient information error."
 
+
+
+    """
     # If only ename was provided for doctor information, check it exists.
     if (ename != ''):
         queryStr='SELECT p.name FROM patient p, doctor d  WHERE (p.name=\'{}\' AND p.health_care_no=d.health_care_no)'.format(ename)
@@ -93,6 +154,7 @@ def createPrescription(pnum, pname, tname, enum, ename):
             # If there is only 1 doctor with that name, enum is easy to get.
             enum = doc_info[0]
             enum = enum[1]
+        
     
     # If only pname was provided for patient information, check it exists.
     if (pname != ''):
@@ -119,7 +181,8 @@ def createPrescription(pnum, pname, tname, enum, ename):
             # If there is only 1 patient with that name, pnum is easy to get.
             pnum = patient_info[0]
             pnum = pnum[1]
- 
+    """ 
+
     # Get type_id based off tname. Also check type_id exists.
     queryStr='SELECT type_id FROM test_type WHERE test_name=\'{}\''.format(tname)
     cur.execute(queryStr)
@@ -402,3 +465,5 @@ while 1:
     else:
         con.close()
         sys.exit(0)           # user chose Cancelimport curses
+
+
