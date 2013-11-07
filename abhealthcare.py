@@ -171,6 +171,9 @@ def performSearch(stype, pnum = None, enum = None, sdate = None, edate = None,
         queryStr='SELECT p.health_care_no, p.name, tt.test_name, tr.test_date, tr.result FROM patient p, test_type tt, test_record tr WHERE health_care_no={} AND tr.patient_no=p.health_care_no AND tr.type_id=tt.type_id ORDER BY p.health_care_no, p.name, tt.test_name, tr.test_date, tr.result'.format(pnum)
         cur.execute(queryStr)
         record_list=cur.fetchall()
+        # If there's no results display a message.
+        if (len(record_list)==0):
+            return "No Results Found."
         # The results need to be formatted.
         formatted_records=",".join("(%s,%s,%s,%s,%s)" % tup for tup in record_list)
         formatted_records = formatted_records.lstrip("(")
@@ -212,13 +215,14 @@ def performSearch(stype, pnum = None, enum = None, sdate = None, edate = None,
         else:
             return "Error. Either a doctor employee # or a doctor name is required to perform search."
         # Now that information is known to be correct, perform the search.
-        print("Before: ", sdate)
         sdate = 'TO_DATE(\'{}\', \'dd/mm/yyyy\')'.format(sdate)
-        print("After: ", sdate)
         edate = 'TO_DATE(\'{}\', \'dd/mm/yyyy\')'.format(edate)
         queryStr='SELECT p.health_care_no, p.name, tt.test_name, tr.prescribe_date FROM patient p, test_type tt, test_record tr WHERE tr.employee_no={} AND tt.type_id=tr.type_id AND tr.patient_no = p.health_care_no AND tr.prescribe_date >= {} AND tr.prescribe_date <= {} ORDER BY p.health_care_no, p.name, tt.test_name, tr.prescribe_date'.format(enum, sdate, edate)
         cur.execute(queryStr)
         prescribe_list=cur.fetchall()
+        # If there's no results display a message.
+        if(len(prescribe_list)==0):
+            return "No Results Found."
         # The results need to be formatted.
         formatted =",".join("(%s,%s,%s,%s)" % tup for tup in prescribe_list)
         formatted = formatted.lstrip("(")
@@ -231,7 +235,10 @@ def performSearch(stype, pnum = None, enum = None, sdate = None, edate = None,
 
         
     # SEARCH TYPE 3 GOES HERE
+    # Alarming Age Search: Display the health_care_no, name, address, and phone number of all patients who have reached the alarming age of a given test type,
+    # but have never taken a test of that type by requesting the test type name.
     else:
+
         pass
     return "performSearch not yet implemented"
 
