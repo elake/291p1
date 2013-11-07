@@ -127,7 +127,7 @@ def checkTest(pnum, tname, enum):
     cur.execute(queryStr)
     return cur.fetchone()
 
-
+# >>>>>> Only Search type one is finished. The other 2 have not been started. <<<<<<<<<<<
 def performSearch(stype, pnum = None, enum = None, sdate = None, edate = None,
                   ttype = None, pname = None):
     """
