@@ -64,7 +64,6 @@ def createPrescription(pnum, pname, tname, enum, ename):
     else:
         return "Error. Patient into?"
         
-
     # Get type_id based off tname. Also check type_id exists.
     queryStr='SELECT type_id FROM test_type WHERE test_name=\'{}\''.format(tname)
     cur.execute(queryStr)
@@ -146,47 +145,19 @@ def performSearch(stype, pnum = None, enum = None, sdate = None, edate = None,
     if (stype == ptr): 
         # If pnum was provided, check it exists.
         if (pnum != ''):
-            queryStr='SELECT health_care_no FROM patient WHERE health_care_no={}'.format(pnum)
-            cur.execute(queryStr)
-            is_patient = cur.fetchone()
-            if is_patient is None:
-                return "Error. Patient number does not exist. Please add patient using Update/Create Patient Info."
+            if (check_pnum(pnum) == 0):            
+                return "Error. Patient health care # does not exist. Please add patient using Update/Create Patient Info."
             # If pnum and pname were both provided, check that pnum matches corresponding pname.
             elif (pname != ''):
-                queryStr='SELECT name FROM patient WHERE health_care_no={}'.format(pnum)
-                cur.execute(queryStr)
-                pmatching_name = cur.fetchone()
-                pmatching_name = pmatching_name[0]
-                if (pmatching_name != pname):
+                if (check_pmatch(pnum, pname) == 0):
                     return "Error. Patient health care # does not match patient name provided."    
-            # If pnum was the only thing provided for patient and matches a patient in the database, no further work required.
-            else:
-                pass
+            else: # End of if
+                pass       
         # If only pname was provided for patient information, check it exists.
         elif (pname != ''):
-            queryStr='SELECT name FROM patient WHERE name=\'{}\''.format(pname)
-            cur.execute(queryStr)
-            is_pname=cur.fetchone()
-            if is_pname is None:
+            pnum = check_pname(pname)
+            if (pnum == None):
                 return "Error. Patient name does not exist."
-            # If there are multiple patients: Print all patient names found to gui, along with their some of their information.
-            queryStr='SELECT name, health_care_no, phone FROM patient WHERE name=\'{}\''.format(pname)
-            cur.execute(queryStr)
-            patient_info=cur.fetchall()
-            if len(patient_info) > 1:
-                patient_list=[]
-                for patient in patient_info:
-                    patient_list.append(patient)
-                # Get pnum for selected patient for new test_record.
-                right_patient = eg.choicebox("Select the correct patient information:", "Patient Name Search Results", patient_list)
-                right_patient = right_patient.lstrip('(')
-                right_patient = right_patient.rstrip(')')
-                right_patient = right_patient.split(",")
-                pnum = right_patient[1].strip("'")
-            else:
-                # If there is only 1 patient with that name, pnum is easy to get.
-                pnum = patient_info[0]
-                pnum = pnum[1]
         # One of pnum or pname is required.
         else:
             return "Error. Either a patient name or a patient health care # is required to perform search."
@@ -194,9 +165,15 @@ def performSearch(stype, pnum = None, enum = None, sdate = None, edate = None,
         queryStr='SELECT p.health_care_no, p.name, tt.test_name, tr.test_date, tr.result FROM patient p, test_type tt, test_record tr WHERE health_care_no={} AND tr.patient_no=p.health_care_no AND tr.type_id=tt.type_id ORDER BY p.health_care_no, p.name, tt.test_name, tr.test_date, tr.result'.format(pnum)
         cur.execute(queryStr)
         record_list=cur.fetchall()
+        # The results need to be formatted.
         formatted_records=",".join("(%s,%s,%s,%s,%s)" % tup for tup in record_list)
-        formatted_records.split(",")
-        eg.textbox("Search Results","itle",formatted_records)
+        formatted_records = formatted_records.lstrip("(")
+        formatted_records = formatted_records.rstrip(")")
+        formatted_records = formatted_records.split("),(")
+        # Add new lines to the end of each record.
+        for i in range(len(formatted_records)):
+            formatted_records[i] = formatted_records[i]+'\n'
+        eg.textbox("Results found:","Patient Record Search",formatted_records)
 
     return "performSearch not yet implemented"
 
@@ -330,7 +307,7 @@ def check_pname(pname):
             patient_list.append(patient)
         # Get pnum for selected patient for new test_record.
         pnum = eg.choicebox("Select the correct patient information:", "Patient Name Search Results", patient_list)
-        pnum = right_patient.lstrip('(')
+        pnum = pnum.lstrip('(')
         pnum = pnum.rstrip(')')
         pnum = pnum.split(",")
         pnum = pnum[1].strip("'")
@@ -338,6 +315,7 @@ def check_pname(pname):
         # If there is only 1 patient with that name, pnum is easy to get.
         pnum = patient_info[0]
         pnum = pnum[1]
+    return (pnum)
 
 
 import easygui as eg
