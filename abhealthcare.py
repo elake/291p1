@@ -9,6 +9,7 @@ The first five functions below need to be implemented.
 import sys
 import cx_Oracle
 import time
+import datetime
 
 def createPrescription(pnum, pname, tname, enum, ename):
     """ 
@@ -87,8 +88,8 @@ def createPrescription(pnum, pname, tname, enum, ename):
     # Assumes all inserts have followed test_id incrementing procedure
     test_id = cur.execute('SELECT COUNT(test_id) FROM test_record').fetchone()[0]+1
     # Create a new test record (date, result, lab are all null)
-    pdate = time.strftime('%d/%m/%y')
-    pdate = 'TO_DATE(\'{}\', \'dd/mm/yy\')'.format(pdate)
+    pdate = time.strftime('%d/%m/%Y')
+    pdate = 'TO_DATE(\'{}\', \'dd/mm/yyyy\')'.format(pdate)
     
     insertStr='INSERT into TEST_RECORD (test_id,type_id,patient_no,employee_no,medical_lab,result,prescribe_date,test_date) values ({}, {}, {}, {}, {}, {}, {}, {})'.format(test_id, type_id, pnum, enum, 'NULL', 'NULL', pdate, 'NULL')
     cur.execute(insertStr)
@@ -127,15 +128,12 @@ def checkTest(pnum, tname, enum):
     cur.execute(queryStr)
     return cur.fetchone()
 
-# >>>>>> Only Search type one is finished. The other 2 have not been started. <<<<<<<<<<<
+# >>>>>> Only Search type one and two is finished. ALARMING RATE IS NOT. Search is not fully implemented. Not sure how to do alarming yet. <<<<<<<<<<<
 def performSearch(stype, pnum = None, enum = None, sdate = None, edate = None,
-                  ttype = None, pname = None):
+                  ttype = None, pname = None, ename = None):
     """
-    Three types of search:
-    1) List health_care_no, patient name, test type name, testing date, and test result of all records by inputing either a
-    health_care_no or a patient name.
-    2) List health_care_no, patient name, test type name, and prescribe date of all tests prescribed by a doctor during a specified
-    time period. The user needs to enter the doctor name or employee_no and the start and end dates to which the tests were prescribed.
+    Search type 3 still needs to be done! 
+
     3) Display the health_care_no, name, address, and phone number of all patients who have reached the alarming age of a given test type,
     but have never taken a test of that type by requesting the test type name.
     """
@@ -153,7 +151,7 @@ def performSearch(stype, pnum = None, enum = None, sdate = None, edate = None,
                     return "Error. Patient health care # does not match patient name provided."    
             else: # End of if
                 pass       
-        # If only pname was provided for patient information, check it exists.
+        # If only pname was provided for patient information, check it exists and find pnum.
         elif (pname != ''):
             pnum = check_pname(pname)
             if (pnum == None):
@@ -170,11 +168,63 @@ def performSearch(stype, pnum = None, enum = None, sdate = None, edate = None,
         formatted_records = formatted_records.lstrip("(")
         formatted_records = formatted_records.rstrip(")")
         formatted_records = formatted_records.split("),(")
-        # Add new lines to the end of each record.
+         # Add new lines to the end of each record.
         for i in range(len(formatted_records)):
             formatted_records[i] = formatted_records[i]+'\n'
         eg.textbox("Results found:","Patient Record Search",formatted_records)
+    
+    # Doctor Prescription Search:List health_care_no, patient name, test type name, and prescribe date of all tests prescribed by a doctor during a specified
+    # time period. The user needs to enter the doctor name or employee_no and the start and end dates to which the tests were prescribed.
+    elif (stype == dpr):
+        # Make sure date fields are not empty:
+        if (sdate == None or edate == None):
+            return "Error. Both date fields are required to perform search."
+        # Convert sdate and edate from strings to dates.
+        sdate_temp = datetime.datetime.strptime(sdate,'%d/%m/%Y').date()
+        edate_temp = datetime.datetime.strptime(edate,'%d/%m/%Y').date()
+        # Make sure sdate is before edate.
+        if (edate_temp <= sdate_temp):
+            return "Error. End date must be a later date than start date."
+        # If enum was provided, check it exists
+        if (enum != ''):
+            if (check_enum(enum) == 0):
+                return "Error. Employee number does not exist."
+            # If enum and ename were both provided, check that enum matched corresponding ename.
+            elif (ename != ''):
+                if (check_ematch(enum, ename) == 0):
+                    return "Error. Doctor employee # does not match provided Doctor name."
+            else: # End of it
+                pass
+        # If only ename was provided for doctor information, check it exists and find enum.
+        elif (ename != ''):
+            enum = check_ename(ename)
+            if (enum == None):
+                return "Error. Doctor name does not exist."
+        # One of enum or ename is required.
+        else:
+            return "Error. Either a doctor employee # or a doctor name is required to perform search."
+        # Now that information is known to be correct, perform the search.
+        print("Before: ", sdate)
+        sdate = 'TO_DATE(\'{}\', \'dd/mm/yyyy\')'.format(sdate)
+        print("After: ", sdate)
+        edate = 'TO_DATE(\'{}\', \'dd/mm/yyyy\')'.format(edate)
+        queryStr='SELECT p.health_care_no, p.name, tt.test_name, tr.prescribe_date FROM patient p, test_type tt, test_record tr WHERE tr.employee_no={} AND tt.type_id=tr.type_id AND tr.patient_no = p.health_care_no AND tr.prescribe_date >= {} AND tr.prescribe_date <= {} ORDER BY p.health_care_no, p.name, tt.test_name, tr.prescribe_date'.format(enum, sdate, edate)
+        cur.execute(queryStr)
+        prescribe_list=cur.fetchall()
+        # The results need to be formatted.
+        formatted =",".join("(%s,%s,%s,%s)" % tup for tup in prescribe_list)
+        formatted = formatted.lstrip("(")
+        formatted = formatted.rstrip(")")
+        formatted = formatted.split("),(")
+         # Add new lines to the end of each record.
+        for i in range(len(formatted)):
+            formatted[i] = formatted[i]+'\n'
+        eg.textbox("Results found:","Doctor Prescription Record Search",formatted)
 
+        
+    # SEARCH TYPE 3 GOES HERE
+    else:
+        pass
     return "performSearch not yet implemented"
 
 def informationUpdate(pnum, name, address, birthday, phone):
@@ -428,18 +478,17 @@ def guiSearch():
         title = "Result"
         eg.msgbox(msg, title)
     elif choice == dpr:
-        msg = "Please enter the employee number and date range for your search."
+        msg = "Please enter the employee number or employee name and date range for your search."
         title = "Doctor Prescription Record Search"
-        fieldNames = ["Doctor Employee #", "Start Date (mm/dd/yyyy)",
-                      "End Date   (mm/dd/yyyy)"]
+        fieldNames = ["Doctor Employee #", "Doctor Name", "Start Date (dd/mm/yyyy)",
+                      "End Date   (dd/mm/yyyy)"]
         fieldValues = []
         fieldValues = eg.multenterbox(msg, title, fieldNames)
         if fieldValues == None:
             eg.msgbox('Operation cancelled')
             return
-        enum, startdate, enddate = fieldValues
-        msg = performSearch(dpr, enum = enum, sdate = startdate,
-                            edate = enddate)
+        #enum, ename, startdate, enddate = fieldValues
+        msg = performSearch(dpr, enum = fieldValues[0], ename = fieldValues[1], sdate = fieldValues[2], edate = fieldValues[3])
         title = "Result"
         eg.msgbox(msg, title)
     elif choice == aa:
