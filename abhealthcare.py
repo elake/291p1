@@ -107,7 +107,9 @@ def performTest(test_id, lname, tresult):
     - Only called when checkTest has run successfully (patient has valid
       prescription)
     """
-    updateStr=('UPDATE test_record SET result = \'{}\' WHERE test_id = {}').format(tresult, test_id)
+    tdate = time.strftime('%d/%m/%Y')
+    tdate = 'TO_DATE(\'{}\', \'dd/mm/yyyy\')'.format(tdate)
+    updateStr=('UPDATE test_record SET result = \'{}\', test_date = {} WHERE test_id = {}').format(tresult, tdate, test_id)
     cur.execute(updateStr)
     con.commit()
 
