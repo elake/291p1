@@ -106,10 +106,14 @@ def performTest(test_id, lname, tresult):
     - Only called when checkTest has run successfully (patient has valid
       prescription)
     """
-    updateStr=('UPDATE test_record SET result = {} WHERE test_id = {}').format(tresult, test_id)
-    curs.execute(updateStr)
-    
-    return curs.fetchall()
+    updateStr=('UPDATE test_record SET result = \'{}\' WHERE test_id = {}').format(tresult, test_id)
+    cur.execute(updateStr)
+    con.commit()
+
+    selectStr=('SELECT * FROM test_record WHERE test_id = {}').format(test_id) 
+    cur.execute(selectStr)
+
+    return cur.fetchall()
 
 def checkTest(pnum, tname, enum):
     """
