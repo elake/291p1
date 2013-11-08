@@ -263,7 +263,9 @@ def performSearch(stype, pnum = None, enum = None, sdate = None, edate = None,
          # Add new lines to the end of each record.
         for i in range(len(formatted_aa)):
             formatted_aa[i] = formatted_aa[i]+'\n'
-        eg.textbox('Search Results: Patient Health Care #, Patient Name, Address, Phone Number', 'Alarming Age Search Results', formatted_aa)
+
+        s = 'Alarming Age Search Results for Test: {}'.format(ttype)
+        eg.textbox('Search Results: Patient Health Care #, Patient Name, Address, Phone Number', s, formatted_aa)
 
     return "Search Successful!"
 
@@ -448,8 +450,14 @@ def guiTest():
     fieldNames = ["Patient Healthcare #", "Test Name", "Employee #"]
     fieldValues = []
     fieldValues = eg.multenterbox(msg, title, fieldNames)
-    if fieldValues == None:
-        eg.msgbox('Operation cancelled')
+    if fieldValues[0] == '':
+        eg.msgbox("Patient Healthcare # not provided", "Error!")
+        return
+    if fieldValues[1] == '':
+        eg.msgbox("Test Name not provided", "Error!")
+        return
+    if fieldValues[2] == '':
+        eg.msgbox("Employee # not provided", "Error!")
         return
     pnum, tname, enum = fieldValues
     valid_prescription = checkTest(int(pnum), tname, int(enum))
