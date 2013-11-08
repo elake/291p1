@@ -1,10 +1,8 @@
 """
-A basic outline for the healthcare project. Uses easyGUI (tested on Linux
-in the labs), and currently has pass functions for Oracle implementation.
-The first five functions below need to be implemented.
+Cmput 291
+Project 1
+Sarah Morris, Victoria Bobey, Eldon Lake
 """
-
-# >>> INTS ARE MISSING <<<
 
 import sys
 import cx_Oracle
@@ -107,12 +105,14 @@ def performTest(test_id, lname, tresult):
     - Only called when checkTest has run successfully (patient has valid
       prescription)
     """
+    #update the test_record with the test result and the current date (test_date)
     tdate = time.strftime('%d/%m/%Y')
     tdate = 'TO_DATE(\'{}\', \'dd/mm/yyyy\')'.format(tdate)
     updateStr=('UPDATE test_record SET result = \'{}\', test_date = {} WHERE test_id = {}').format(tresult, tdate, test_id)
     cur.execute(updateStr)
     con.commit()
 
+    # find the record that was updated to display
     selectStr=('SELECT * FROM test_record WHERE test_id = {}').format(test_id) 
     cur.execute(selectStr)
 
@@ -246,7 +246,6 @@ def performSearch(stype, pnum = None, enum = None, sdate = None, edate = None,
             return "Error. Test name does not exist."
         type_id = type_id[0]
         # Now that we know the input information is correct, perform the search.
-        # >>> I have no idea how to do this. <<<< :) To find test records you can use type_id which was found above
         
         queryStr=('SELECT DISTINCT health_care_no, name, address, phone FROM patient p, (SELECT min(c1.age) age FROM (SELECT t1.type_id, count(distinct t1.patient_no)/count(distinct t2.patient_no) ab_rate FROM test_record t1, test_record t2 WHERE t1.result <> \'normal\' AND t1.type_id = t2.type_id GROUP BY t1.type_id) r, (SELECT t1.type_id,age,COUNT(distinct p1.health_care_no) AS ab_cnt FROM patient p1,test_record t1, (SELECT DISTINCT trunc(months_between(sysdate,p1.birth_day)/12) AS age FROM patient p1) WHERE trunc(months_between(sysdate,p1.birth_day)/12)>=age AND p1.health_care_no=t1.patient_no AND t1.result<>\'normal\' GROUP BY age,t1.type_id) c1, (SELECT t1.type_id,age,COUNT(distinct p1.health_care_no) AS cnt FROM patient p1, test_record t1, (SELECT DISTINCT trunc(months_between(sysdate,p1.birth_day)/12) AS age FROM patient p1) WHERE trunc(months_between(sysdate,p1.birth_day)/12)>=age AND p1.health_care_no=t1.patient_no GROUP BY age,t1.type_id) c2 WHERE c1.age = c2.age AND c1.type_id = c2.type_id AND c1.type_id = r.type_id AND c1.ab_cnt/c2.cnt>=2*r.ab_rate AND c1.type_id = {}) medical_risk WHERE trunc(months_between(sysdate, birth_day)/12) >= medical_risk.age AND p.health_care_no NOT IN (SELECT patient_no FROM test_record t WHERE t.type_id = {})').format(type_id, type_id)
         cur.execute(queryStr)
