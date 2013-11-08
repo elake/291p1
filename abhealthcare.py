@@ -1,10 +1,10 @@
 """
-A basic outline for the healthcare project. Uses easyGUI (tested on Linux
-in the labs), and currently has pass functions for Oracle implementation.
-The first five functions below need to be implemented.
+Cmput 291
+Project 1
+Sarah Morris, Victoria Bobey, Eldon Lake
 """
 
-# >>> INTS ARE MISSING <<< wut?
+
 
 import sys
 import cx_Oracle
@@ -123,6 +123,7 @@ def performTest(test_id, lname, tresult):
     - Only called when checkTest has run successfully (patient has valid
       prescription)
     """
+#update the test_record with the test result and the current date (test_date)
     try:
         tdate = time.strftime('%d/%m/%Y')
     except:
@@ -135,6 +136,7 @@ def performTest(test_id, lname, tresult):
         return "Invalid entry for one or more fields. Please check that all your responses are valid values."
     con.commit()
 
+    # find the record that was updated to display
     selectStr=('SELECT * FROM test_record WHERE test_id = {}').format(test_id) 
     try:
         cur.execute(selectStr)
