@@ -182,7 +182,7 @@ def performSearch(stype, pnum = None, enum = None, sdate = None, edate = None,
          # Add new lines to the end of each record.
         for i in range(len(formatted_records)):
             formatted_records[i] = formatted_records[i]+'\n'
-        eg.textbox("Results found:","Patient Record Search",formatted_records)
+        eg.textbox("Results found: Patient Health Care #, Patient Name, Test Name, Test Date, Test Record","Patient Record Search",formatted_records)
     
     # Doctor Prescription Search:List health_care_no, patient name, test type name, and prescribe date of all tests prescribed by a doctor during a specified
     # time period. The user needs to enter the doctor name or employee_no and the start and end dates to which the tests were prescribed.
@@ -231,8 +231,7 @@ def performSearch(stype, pnum = None, enum = None, sdate = None, edate = None,
          # Add new lines to the end of each record.
         for i in range(len(formatted)):
             formatted[i] = formatted[i]+'\n'
-        eg.textbox("Results found:","Doctor Prescription Record Search",formatted)
-
+        eg.textbox("Search Results: Patient Heath Care #, Patient Name, Test Name, Prescribed Date","Doctor Prescription Record Search Results",formatted)
         
     # SEARCH TYPE 3 GOES HERE
     # Alarming Age Search: Display the health_care_no, name, address, and phone number of all patients who have reached the alarming age of a given test type,
@@ -240,7 +239,7 @@ def performSearch(stype, pnum = None, enum = None, sdate = None, edate = None,
     else:
 
         pass
-    return "performSearch not yet implemented"
+    return "Search Successful!"
 
 def informationUpdate(pnum, name, address, birthday, phone):
     """
