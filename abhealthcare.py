@@ -142,7 +142,7 @@ def performTest(test_id, lname, tresult):
         cur.execute(selectStr)
     except:
         return "Invalid entry for one or more fields. Please check that all your responses are valid values."
-    return cur.fetchall()
+    return "Test record updated successfully."
 
 def checkTest(pnum, tname, enum):
     """
