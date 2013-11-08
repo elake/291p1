@@ -4,7 +4,7 @@ in the labs), and currently has pass functions for Oracle implementation.
 The first five functions below need to be implemented.
 """
 
-# >>> INTS ARE MISSING <<<
+# >>> INTS ARE MISSING <<< wut?
 
 import sys
 import cx_Oracle
@@ -67,7 +67,10 @@ def createPrescription(pnum, pname, tname, enum, ename):
         
     # Get type_id based off tname. Also check type_id exists.
     queryStr='SELECT type_id FROM test_type WHERE test_name=\'{}\''.format(tname)
-    cur.execute(queryStr)
+    try:
+        cur.execute(queryStr)
+    except:
+        return "Invalied entry for one or more fields. Please check that all your responses are valid values."
     type_id = cur.fetchone()
     if type_id is None:
         return "Prescription creation failed. Test type does not exist."
@@ -75,7 +78,10 @@ def createPrescription(pnum, pname, tname, enum, ename):
 
     # Check prescription does not conflict with not_allowed.
     queryStr='SELECT health_care_no FROM not_allowed WHERE type_id={}'.format(type_id)
-    cur.execute(queryStr)
+    try:
+        cur.execute(queryStr)
+    except:
+        "Invalid entry for one or more fields. Please check that all your responses are valid values."
     not_allowed = cur.fetchall()
     for patient_num in not_allowed:
         # Cast to ints for comparison
@@ -86,13 +92,23 @@ def createPrescription(pnum, pname, tname, enum, ename):
 
     # Generate a new test_id incrementing up from the last
     # Assumes all inserts have followed test_id incrementing procedure
-    test_id = cur.execute('SELECT COUNT(test_id) FROM test_record').fetchone()[0]+1
+    try:
+        cur.execute('SELECT COUNT(test_id) FROM test_record')
+    except:
+        return "Invalid entry for one or more fields. Please check that all your responses are valid values."
+    test_id = cur.fetchone()[0]+1
     # Create a new test record (date, result, lab are all null)
-    pdate = time.strftime('%d/%m/%Y')
+    try:
+        pdate = time.strftime('%d/%m/%Y')
+    except:
+        return "Invalid date! Please ensure that date matches requested format."
     pdate = 'TO_DATE(\'{}\', \'dd/mm/yyyy\')'.format(pdate)
     
     insertStr='INSERT into TEST_RECORD (test_id,type_id,patient_no,employee_no,medical_lab,result,prescribe_date,test_date) values ({}, {}, {}, {}, {}, {}, {}, {})'.format(test_id, type_id, pnum, enum, 'NULL', 'NULL', pdate, 'NULL')
-    cur.execute(insertStr)
+    try:
+        cur.execute(insertStr)
+    except:
+        return "Invalid entry for one or more fields. Please check that all your responses are valid values."
     con.commit()
 
     # Inform user prescription successfully created
@@ -107,15 +123,23 @@ def performTest(test_id, lname, tresult):
     - Only called when checkTest has run successfully (patient has valid
       prescription)
     """
-    tdate = time.strftime('%d/%m/%Y')
+    try:
+        tdate = time.strftime('%d/%m/%Y')
+    except:
+        return "Error! Date not in requested format."
     tdate = 'TO_DATE(\'{}\', \'dd/mm/yyyy\')'.format(tdate)
     updateStr=('UPDATE test_record SET result = \'{}\', test_date = {} WHERE test_id = {}').format(tresult, tdate, test_id)
-    cur.execute(updateStr)
+    try:
+        cur.execute(updateStr)
+    except:
+        return "Invalid entry for one or more fields. Please check that all your responses are valid values."
     con.commit()
 
     selectStr=('SELECT * FROM test_record WHERE test_id = {}').format(test_id) 
-    cur.execute(selectStr)
-
+    try:
+        cur.execute(selectStr)
+    except:
+        return "Invalid entry for one or more fields. Please check that all your responses are valid values."
     return cur.fetchall()
 
 def checkTest(pnum, tname, enum):
@@ -125,7 +149,10 @@ def checkTest(pnum, tname, enum):
     """
     # Get type_id
     queryStr='SELECT type_id FROM test_type WHERE test_name=\'{}\''.format(tname)
-    cur.execute(queryStr)
+    try:
+        cur.execute(queryStr)
+    except:
+        return "Invalid entry for one or more fields. Please check that all your responses are valid values."
     type_id = cur.fetchone()
     if type_id is None:
         eg.msgbox("Test type does not exist.", "Error!")
@@ -133,7 +160,10 @@ def checkTest(pnum, tname, enum):
     type_id = type_id[0]
 
     queryStr = 'SELECT test_id, result FROM test_record WHERE patient_no={} AND type_id={} AND employee_no={}'.format(pnum, type_id, enum)
-    cur.execute(queryStr)
+    try:
+        cur.execute(queryStr)
+    except:
+        return "Invalid entry for one or more fields. Please check that all your responses are valid values."
     return cur.fetchone()
 
 def performSearch(stype, pnum = None, enum = None, sdate = None, edate = None,
@@ -165,7 +195,10 @@ def performSearch(stype, pnum = None, enum = None, sdate = None, edate = None,
             return "Error. Either a patient name or a patient health care # is required to perform search."
         # Now that information is known to be correct, perform the search. 
         queryStr='SELECT p.health_care_no, p.name, tt.test_name, tr.test_date, tr.result FROM patient p, test_type tt, test_record tr WHERE health_care_no={} AND tr.patient_no=p.health_care_no AND tr.type_id=tt.type_id ORDER BY p.health_care_no, p.name, tt.test_name, tr.test_date, tr.result'.format(pnum)
-        cur.execute(queryStr)
+        try:
+            cur.execute(queryStr)
+        except:
+            return "Invalid entry for one or more fields. Please check that all your responses are valid values."
         record_list=cur.fetchall()
         # If there's no results display a message.
         if (len(record_list)==0):
@@ -187,8 +220,11 @@ def performSearch(stype, pnum = None, enum = None, sdate = None, edate = None,
         if (sdate == None or edate == None):
             return "Error. Both date fields are required to perform search."
         # Convert sdate and edate from strings to dates.
-        sdate_temp = datetime.datetime.strptime(sdate,'%d/%m/%Y').date()
-        edate_temp = datetime.datetime.strptime(edate,'%d/%m/%Y').date()
+        try:
+            sdate_temp = datetime.datetime.strptime(sdate,'%d/%m/%Y').date()
+            edate_temp = datetime.datetime.strptime(edate,'%d/%m/%Y').date()
+        except:
+            return "Invalid date! Please ensure that date provided matches requested format."
         # Make sure sdate is before edate.
         if (edate_temp <= sdate_temp):
             return "Error. End date must be a later date than start date."
@@ -214,7 +250,10 @@ def performSearch(stype, pnum = None, enum = None, sdate = None, edate = None,
         sdate = 'TO_DATE(\'{}\', \'dd/mm/yyyy\')'.format(sdate)
         edate = 'TO_DATE(\'{}\', \'dd/mm/yyyy\')'.format(edate)
         queryStr='SELECT p.health_care_no, p.name, tt.test_name, tr.prescribe_date FROM patient p, test_type tt, test_record tr WHERE tr.employee_no={} AND tt.type_id=tr.type_id AND tr.patient_no = p.health_care_no AND tr.prescribe_date >= {} AND tr.prescribe_date <= {} ORDER BY p.health_care_no, p.name, tt.test_name, tr.prescribe_date'.format(enum, sdate, edate)
-        cur.execute(queryStr)
+        try:
+            cur.execute(queryStr)
+        except:
+            return "Invalid entry for one or more fields. Please check that all your responses are valid values."
         prescribe_list=cur.fetchall()
         # If there's no results display a message.
         if(len(prescribe_list)==0):
@@ -240,7 +279,10 @@ def performSearch(stype, pnum = None, enum = None, sdate = None, edate = None,
         # Check that test name exists and if so, get the type_id.
         # Get type_id based off tname. Also check type_id exists.
         queryStr='SELECT type_id FROM test_type WHERE test_name=\'{}\''.format(ttype)
-        cur.execute(queryStr)
+        try:
+            cur.execute(queryStr)
+        except:
+            return "Invalid entry for one or more fields. Please check that all your responses are valid values."
         type_id = cur.fetchone()
         if type_id is None:
             return "Error. Test name does not exist."
@@ -249,7 +291,10 @@ def performSearch(stype, pnum = None, enum = None, sdate = None, edate = None,
         # >>> I have no idea how to do this. <<<< :) To find test records you can use type_id which was found above
         
         queryStr=('SELECT DISTINCT health_care_no, name, address, phone FROM patient p, (SELECT min(c1.age) age FROM (SELECT t1.type_id, count(distinct t1.patient_no)/count(distinct t2.patient_no) ab_rate FROM test_record t1, test_record t2 WHERE t1.result <> \'normal\' AND t1.type_id = t2.type_id GROUP BY t1.type_id) r, (SELECT t1.type_id,age,COUNT(distinct p1.health_care_no) AS ab_cnt FROM patient p1,test_record t1, (SELECT DISTINCT trunc(months_between(sysdate,p1.birth_day)/12) AS age FROM patient p1) WHERE trunc(months_between(sysdate,p1.birth_day)/12)>=age AND p1.health_care_no=t1.patient_no AND t1.result<>\'normal\' GROUP BY age,t1.type_id) c1, (SELECT t1.type_id,age,COUNT(distinct p1.health_care_no) AS cnt FROM patient p1, test_record t1, (SELECT DISTINCT trunc(months_between(sysdate,p1.birth_day)/12) AS age FROM patient p1) WHERE trunc(months_between(sysdate,p1.birth_day)/12)>=age AND p1.health_care_no=t1.patient_no GROUP BY age,t1.type_id) c2 WHERE c1.age = c2.age AND c1.type_id = c2.type_id AND c1.type_id = r.type_id AND c1.ab_cnt/c2.cnt>=2*r.ab_rate AND c1.type_id = {}) medical_risk WHERE trunc(months_between(sysdate, birth_day)/12) >= medical_risk.age AND p.health_care_no NOT IN (SELECT patient_no FROM test_record t WHERE t.type_id = {})').format(type_id, type_id)
-        cur.execute(queryStr)
+        try:
+            cur.execute(queryStr)
+        except:
+            return "Invalid entry for one or more fields. Please check that all your responses are valid values."
         alarming_age = cur.fetchall()
       
         # If there's no result display a message.
@@ -276,19 +321,28 @@ def informationUpdate(pnum, name, address, birthday, phone):
     """
     # Check if patient exists
     queryStr = 'SELECT health_care_no from patient where health_care_no={}'.format(pnum)
-    cur.execute(queryStr)
+    try:
+        cur.execute(queryStr)
+    except:
+        return "Invalid entry for one or more fields. Please check that all your responses are valid values."
     if cur.fetchone() is None:
         cont = eg.ccbox("Patient does not exist. Create with supplied information?")
         if cont == 0: return "Entry cancelled."
         insertStr = 'INSERT INTO patient (health_care_no, name, address, birth_day, phone) VALUES ({},\'{}\',\'{}\',to_date(\'{}\', \'mm/dd/yyyy\'),{})'.format(pnum, name, address, birthday, phone)
-        cur.execute(insertStr)
+        try:
+            cur.execute(insertStr)
+        except:
+            return "Invalid entry for one or more fields. Please check that all your responses are valid values."
         con.commit()
         return "Patient created successfully"
     else:
         cont = eg.ccbox("Patient already exists. Update information?")
         if cont == 0: return "Entry cancelled."
         updateStr = 'UPDATE patient SET name={}, address={}, birth_day=to_date(\'{}\', \'mm/dd/yyyy\'), phone={} WHERE health_care_no={}'.format(name, address, birthday, phone, pnum)
-        cur.execute(updateStr)
+        try:
+            cur.execute(updateStr)
+        except:
+            return "Invalid entry for one or more fields. Please check that all your responses are valid values."
         con.commit()
         return "Patient updated successfully"
 
@@ -300,7 +354,10 @@ def check_enum(enum):
     Checks that the enum entered matches an enum in the database.
     """
     queryStr='SELECT employee_no FROM doctor WHERE employee_no={}'.format(enum)
-    cur.execute(queryStr)
+    try:
+        cur.execute(queryStr)
+    except:
+        return "Invalid entry for one or more fields. Please check that all your responses are valid values."
     is_doctor = cur.fetchone()
     if is_doctor is None:
         return (0)
@@ -312,7 +369,10 @@ def check_pnum(pnum):
     Checks that the pnum entered matches a pnum in the database.
     """
     queryStr='SELECT health_care_no FROM patient WHERE health_care_no={}'.format(pnum)
-    cur.execute(queryStr)
+    try:
+        cur.execute(queryStr)
+    except:
+        return "Invalid entry for one or more fields. Please check that all your responses are valid values."
     is_patient = cur.fetchone()
     if is_patient is None:
         return (0)
@@ -324,7 +384,10 @@ def check_ematch(enum, ename):
     Checks that enum matches the ename provided.
     """
     queryStr='SELECT p.name FROM patient p, doctor d  WHERE (d.employee_no={} AND p.health_care_no=d.health_care_no)'.format(enum)
-    cur.execute(queryStr)
+    try:
+        cur.execute(queryStr)
+    except:
+        return "Invalid entry for one or more fields. Please check that all your responses are valid values."
     matching_name = cur.fetchone()
     matching_name = matching_name[0] 
     if (matching_name != ename):
@@ -337,7 +400,10 @@ def check_pmatch(pnum, pname):
     Checks that pnum matches the pname provided.
     """
     queryStr='SELECT name FROM patient WHERE health_care_no={}'.format(pnum)
-    cur.execute(queryStr)
+    try:
+        cur.execute(queryStr)
+    except:
+        return "Invalid entry for one or more fields. Please check that all your responses are valid values."
     pmatching_name = cur.fetchone()
     pmatching_name = pmatching_name[0]
     if (pmatching_name != pname):
@@ -353,13 +419,19 @@ def check_ename(ename):
     """
     # First check ename exists.
     queryStr='SELECT p.name FROM patient p, doctor d  WHERE (p.name=\'{}\' AND p.health_care_no=d.health_care_no)'.format(ename)
-    cur.execute(queryStr)
+    try:
+        cur.execute(queryStr)
+    except:
+        return "Invalid entry for one or more fields. Please check that all your responses are valid values."
     is_ename=cur.fetchone()
     if is_ename is None:
         return (None)
     # If there are multiple doctors: Print all doctor names found to gui, along with their employee_no, clinic_address and office_phone. 
     queryStr='SELECT p.name, d.employee_no, d.clinic_address, d.office_phone FROM patient p, doctor d WHERE (p.name=\'{}\' AND p.health_care_no=d.health_care_no)'.format(ename)
-    cur.execute(queryStr)
+    try:
+        cur.execute(queryStr)
+    except:
+        return "Invalid entry for one or more fields. Please check that all your responses are valid values."
     doc_info=cur.fetchall()
     if len(doc_info) > 1:
         doc_list=[]
@@ -385,13 +457,19 @@ def check_pname(pname):
     """
     # Check for pname existence.
     queryStr='SELECT name FROM patient WHERE name=\'{}\''.format(pname)
-    cur.execute(queryStr)
+    try:
+        cur.execute(queryStr)
+    except:
+        return "Invalid entry for one or more fields. Please check that all your responses are valid values."
     is_pname=cur.fetchone()
     if is_pname is None:
         return (None)
     # If there are multiple patients: Print all patient names found to gui, along with their some of their information.
     queryStr='SELECT name, health_care_no, phone FROM patient WHERE name=\'{}\''.format(pname)
-    cur.execute(queryStr)
+    try:
+        cur.execute(queryStr)
+    except:
+        return "Invalid entry for one or more fields. Please check that all your responses are valid values."
     patient_info=cur.fetchall()
     if len(patient_info) > 1:
         patient_list=[]
@@ -450,6 +528,7 @@ def guiTest():
     fieldNames = ["Patient Healthcare #", "Test Name", "Employee #"]
     fieldValues = []
     fieldValues = eg.multenterbox(msg, title, fieldNames)
+    if fieldValues == None: return "Operation cancelled."
     if fieldValues[0] == '':
         eg.msgbox("Patient Healthcare # not provided", "Error!")
         return
@@ -460,7 +539,13 @@ def guiTest():
         eg.msgbox("Employee # not provided", "Error!")
         return
     pnum, tname, enum = fieldValues
-    valid_prescription = checkTest(int(pnum), tname, int(enum))
+    try:
+        pnum = int(pnum)
+        enum = int(enum)
+    except:
+        eg.msgbox("Error! Please ensure that patient and employee # are integers")
+        return
+    valid_prescription = checkTest(pnum, tname, enum)
     if valid_prescription:
         test_id = valid_prescription[0]
         result = valid_prescription[1]
