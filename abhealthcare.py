@@ -136,14 +136,10 @@ def checkTest(pnum, tname, enum):
     cur.execute(queryStr)
     return cur.fetchone()
 
-# >>>>>> Only Search type one and two is finished. ALARMING RATE IS NOT. Search is not fully implemented. Not sure how to do alarming yet. <<<<<<<<<<<
 def performSearch(stype, pnum = None, enum = None, sdate = None, edate = None,
                   ttype = None, pname = None, ename = None):
     """
-    Search type 3 still needs to be done! 
-
-    3) Display the health_care_no, name, address, and phone number of all patients who have reached the alarming age of a given test type,
-    but have never taken a test of that type by requesting the test type name.
+    Performs the 3 types of search functions.
     """
 
     # Patient Record Search: List health_care_no, patient name, test type name, testing date, and test result of all records
@@ -233,12 +229,38 @@ def performSearch(stype, pnum = None, enum = None, sdate = None, edate = None,
             formatted[i] = formatted[i]+'\n'
         eg.textbox("Search Results: Patient Heath Care #, Patient Name, Test Name, Prescribed Date","Doctor Prescription Record Search Results",formatted)
         
-    # SEARCH TYPE 3 GOES HERE
     # Alarming Age Search: Display the health_care_no, name, address, and phone number of all patients who have reached the alarming age of a given test type,
     # but have never taken a test of that type by requesting the test type name.
     else:
-
-        pass
+        # Make sure the test name field is not empty.
+        if (ttype == None):
+            return "Error. A test name is required to perform the search."
+        # Check that test name exists and if so, get the type_id.
+        # Get type_id based off tname. Also check type_id exists.
+        queryStr='SELECT type_id FROM test_type WHERE test_name=\'{}\''.format(ttype)
+        cur.execute(queryStr)
+        type_id = cur.fetchone()
+        if type_id is None:
+            return "Error. Test name does not exist."
+        type_id = type_id[0]
+        # Now that we know the input information is correct, perform the search.
+        # >>> I have no idea how to do this. <<<< :) To find test records you can use type_id which was found above
+        queryStr='SELECT p.health_care_no, p.name, p.address, p.phone FROM patient p, test_record tr'
+        cur.execute(queryStr)
+        alarming_list=cur.fetchall()
+        # If there's no result display a message.
+        if(len(alarming_list)==0):
+            return "No Results Found."
+        # The results need to be formatted.
+        formatted_aa = ",".join("(%s,%s,%s,%s)" % tup for tup in alarming_list)
+        formatted_aa = formatted_aa.lstrip("(")
+        formatted_aa = formatted_aa.rstrip(")")
+        formatted_aa = formatted_aa.split("),(")
+         # Add new lines to the end of each record.
+        for i in range(len(formatted_aa)):
+            formatted_aa[i] = formatted_aa[i]+'\n'
+        eg.textbox("Search Results: Patient Heath Care #, Patient Name, Address, Phone #","Alarming Age Search Results",formatted_aa)
+       
     return "Search Successful!"
 
 def informationUpdate(pnum, name, address, birthday, phone):
@@ -506,7 +528,7 @@ def guiSearch():
         title = "Result"
         eg.msgbox(msg, title)
     elif choice == aa:
-        msg = "Please enter the test type you would like to search for"
+        msg = "Please enter the name of test type you would like to search for"
         title = "Alarming Age Search"
         # Should later be changed to enterbox if only needs one entry
         fieldNames = ["Test Name"]
